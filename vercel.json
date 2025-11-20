@@ -1,7 +1,4 @@
 {
-  "functions": {
-    "api/*.js": { "runtime": "nodejs18.x" }
-  },
   "rewrites": [
     { "source": "/a2r", "destination": "/api/a2r" },
     { "source": "/r2a", "destination": "/api/r2a" }
