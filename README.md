@@ -1,57 +1,196 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/gJA-GD-V)
-﻿# Tateti Random
+# Conversor Romano ↔ Arábigo
+Varela Alan Christian Emmanuel
 
-API sencilla en Node.js que devuelve un movimiento aleatorio para un tablero de ta-te-ti.
+**Proyecto Final** — Servicio serverless que convierte números romanos a arábigos y viceversa.  
+Desplegado en Vercel como funciones serverless y con tests automáticos en Jest.
 
-## Requisitos previos
-- Node.js 18 o superior.
-- Cuenta en Vercel con un proyecto (puede ser creado desde el dashboard o con el comando vercel link).
-- Acceso de administrador al repositorio en GitHub para crear *secrets*.
+---
 
-## Instalacion local
-1. Clonar el repositorio y situarse en la raiz.
-2. Instalar las dependencias con `npm install`.
-3. Ejecutar la bateria de pruebas con `npm test`.
-4. Levantar el servidor local con `npm start` y consumir el endpoint `GET /move?board=[...]`.
+## Resumen / Objetivo
+Desarrollar un servicio web (hosteado en Vercel) que proporcione dos endpoints REST que:
+- conviertan números romanos a arábigos (`/api/r2a`)
+- conviertan números arábigos a romanos (`/api/a2r`)
 
-## Despliegue continuo en Vercel
-Cada *push* a la rama `main` ejecuta el flujo definido en `.github/workflows/deploy-vercel.yml`. Este flujo instala dependencias, corre las pruebas y despliega en Vercel usando la CLI oficial. Para que funcione, sigue estos pasos una sola vez:
+Cumple con las exigencias:
+- endpoints definidos en `api/` (funciones serverless)
+- tests unitarios y de integración con Jest + Supertest
+- respuestas de error estandarizadas con **RFC 7807** (`application/problem+json`)
+- CORS habilitado (soporte `OPTIONS` preflight)
+- README técnico y pruebas de cobertura
 
-### 1. Autenticarse y vincular el proyecto en Vercel
+---
+
+## Estructura del repositorio
+/ (root)
+├─ package.json
+├─ romano-arabigo.js # lógica + app express para pruebas locales (exporta app)
+├─ /api
+│ ├─ r2a.js # función serverless (roman -> arabic)
+│ └─ a2r.js # función serverless (arabic -> roman)
+├─ /errors
+│ └─ custom-errors.js # clases de error con status y code
+├─ /middlewares
+│ └─ error-handler.js # formatea errores a RFC 7807
+├─ /test
+│ ├─ romanos.test.js
+│ └─ api.test.js
+└─ README.md # (este archivo)
+
+
+---
+
+## Endpoints (API)
+
+### `GET /api/r2a?roman=<ROMAN>`
+Convierte `ROMAN` (string) → número arábigo (integer).
+
+- **Parámetros**: `roman` (query string, obligatorio)
+- **Respuestas**:
+  - `200 OK`  
+    ```json
+    {
+      "type": "/success/roman-to-arabic",
+      "title": "Conversión exitosa",
+      "status": 200,
+      "roman": "XXIV",
+      "arabic": 24
+    }
+    ```
+  - `400 Bad Request` (RFC 7807 `application/problem+json`, ejemplo):
+    ```json
+    {
+      "type": "/errors/invalid_roman",
+      "title": "Número romano inválido: \"IIII\"",
+      "status": 400,
+      "detail": "Número romano inválido: \"IIII\"",
+      "instance": "/api/r2a?roman=IIII"
+    }
+    ```
+
+### `GET /api/a2r?arabic=<NUMBER>`
+Convierte `NUMBER` (integer) → número romano (string).
+
+- **Parámetros**: `arabic` (query string, obligatorio, entero entre 1 y 3999)
+- **Respuestas**:
+  - `200 OK`
+    ```json
+    {
+      "type": "/success/arabic-to-roman",
+      "title": "Conversión exitosa",
+      "status": 200,
+      "arabic": 1987,
+      "roman": "MCMLXXXVII"
+    }
+    ```
+  - `400 Bad Request` (ejemplo para número fuera de rango):
+    ```json
+    {
+      "type": "/errors/out_of_range",
+      "title": "El número 4000 está fuera del rango permitido (1–3999)",
+      "status": 400,
+      "detail": "El número 4000 está fuera del rango permitido (1–3999)",
+      "instance": "/api/a2r?arabic=4000"
+    }
+    ```
+
+---
+
+## CORS / Preflight
+- El servicio responde a `OPTIONS` preflight con status `200` y cabeceras:
+
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, OPTIONS
+Access-Control-Allow-Headers: Content-Type
+
+- Las respuestas de error devuelven `Content-Type: application/problem+json`.
+
+---
+
+## Validaciones principales
+- Romanos: sólo caracteres `I V X L C D M` (mayúsculas/minúsculas normalizadas), regex canónica para estructura, máximo `MMM` en miles.
+- Arábigos: debe ser `Number` entero y `1 <= n <= 3999`.
+
+---
+
+## Errores y formato (RFC 7807)
+Los errores siguen la estructura `application/problem+json` con propiedades clave:
+- `type` — URI corta que identifica el error (p. ej. `/errors/invalid_roman`)
+- `title` — mensaje breve
+- `status` — código HTTP (ej. 400)
+- `detail` — mensaje que explica el problema (fallback a `title`)
+- `instance` — path de la solicitud
+
+---
+
+## Ejecutar localmente (desarrollo)
+
+Requisitos: Node.js 18+, npm
+
+1. Instalar dependencias:
 ```bash
-npm install --global vercel    (este paso instala vecel en tu máquina)
-vercel login  (este paso pide que hagas ENTER. Con eso te abre un browser y espera a que lo autorices)
-vercel link
-```
-El comando `vercel link` crea la carpeta `.vercel/` (no la subas al repositorio) con el archivo `project.json` que contiene `orgId` y `projectId`.
+npm install
 
-### 2. Crear un token de acceso
-Genera un token permanente con `vercel tokens create tateti-ci` o desde el dashboard (Account Settings > Tokens). 
-Yo lo creé con scope completo, y sin expirar. Lo guardé en un archivo .private que no se sube al git
-Guarda el valor; solo se muestra una vez.
+Ejecutar servidor local (modo Express, sólo para pruebas locales):
+node romano-arabigo.js
+# escucha por defecto en http://localhost:3000
 
-### 3. Configurar *GitHub Secrets*
-En GitHub entra a **Settings > Secrets and variables > Actions** y agrega los siguientes secretos:
-- `VERCEL_TOKEN`: el token generado en el paso anterior.
-- `VERCEL_ORG_ID`: valor `orgId` del archivo `.vercel/project.json`.
-- `VERCEL_PROJECT_ID`: valor `projectId` del archivo `.vercel/project.json`.
+Probar endpoints:
 
-Si tu aplicacion necesita variables de entorno, definalas en Vercel (`vercel env add` o desde el dashboard) o agrega pasos adicionales en el workflow.
+http://localhost:3000/r2a?roman=XXIV
 
-### 4. Disparar el workflow a mano (no debería hacer falta con GitHub Actions)
-Con los secretos configurados, haz *push* a `main`. GitHub Actions ejecuta:
-1. `npm ci`
-2. `npm test`
-3. `npx vercel pull --yes --environment=production`
-4. `npx vercel build --prod`
-5. `npx vercel deploy --prebuilt --prod`
+http://localhost:3000/a2r?arabic=1987
 
-Al finalizar vas a ver la URL de despliegue en la pestana **Actions** del repositorio y en el dashboard de Vercel.
+Para emular Vercel localmente (opcional) usa vercel dev si tenés instalado Vercel CLI.
 
-## Personalizacion
-- Para desplegar desde otra rama, cambia la seccion `on.push.branches` del workflow.
-- Si deseas saltar las pruebas antes de desplegar, elimina el paso "Run tests" en el YAML.
+Tests (Jest + Supertest)
 
-## Scripts utiles
-- `npm start`: inicia el servidor.
-- `npm test`: ejecuta Jest.
+Ejecutar todos los tests y generar coverage:
+npm test
+
+Los tests cubren casos válidos, invalidaciones, casuística borde (repeticiones inválidas, subtractive rule, entradas mixtas, decimales, strings) y los endpoints serverless.
+
+El proyecto incluye coverage y está configurado para ignorar .vercel/ en los tests.
+
+Cobertura
+
+Se incluye coverage de Jest (ver carpeta coverage/ tras ejecutar npm test).
+
+Los tests de ejemplo en la entrega alcanzan cobertura alta en lógica y middleware.
+
+Despliegue en Vercel
+
+Repositorio conectado en Vercel:
+https://vercel.com/alan-christian-emmanuel-varelas-projects/numeros-romanos-x-alan1125x 
+
+
+
+Comprobar endpoints desplegados:
+
+https://numeros-romanos-x-alan1125x.vercel.app/api/r2a?roman=XXIV
+
+https://numeros-romanos-x-alan1125x.vercel.app/api/a2r?arabic=1987
+
+
+Notas técnicas / decisiones
+
+Código principal exporta module.exports = { app, romanToArabic, arabicToRoman } para permitir tests con Supertest.
+
+API serverless en /api usa CommonJS (module.exports) para compatibilidad con Vercel node runtimes.
+
+Middlewares: central error-handler que produce application/problem+json.
+
+Validaciones realizadas tanto en capa API (parámetros) como en funciones puras (romanToArabic / arabicToRoman).
+
+Evitado exponer stack traces en respuestas públicas (sólo se registran en consola).
+
+
+Ética profesional
+
+El servicio valida y rechaza inputs malformados evitando comportamiento inseguro o ambigüo.
+
+Se aplican límites (rango 1–3999) para evitar condiciones de DoS por entradas excesivamente largas.
+
+Se documentan claramente las respuestas y errores para que clientes sepan cómo actuar ante fallos.
+
+
+
