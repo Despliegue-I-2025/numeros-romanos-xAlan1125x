@@ -134,7 +134,8 @@ Ejecutar servidor local (modo Express, sólo para pruebas locales):
 node romano-arabigo.js
 # escucha por defecto en http://localhost:3000
 
-Probar endpoints:
+
+ Probar endpoints:
 
 http://localhost:3000/r2a?roman=XXIV
 
@@ -150,6 +151,7 @@ npm test
 Los tests cubren casos válidos, invalidaciones, casuística borde (repeticiones inválidas, subtractive rule, entradas mixtas, decimales, strings) y los endpoints serverless.
 
 El proyecto incluye coverage y está configurado para ignorar .vercel/ en los tests.
+
 
 Cobertura
 
@@ -170,7 +172,8 @@ https://numeros-romanos-x-alan1125x.vercel.app/api/r2a?roman=XXIV
 
 https://numeros-romanos-x-alan1125x.vercel.app/api/a2r?arabic=1987
 
-
+---
+ 
 Notas técnicas / decisiones
 
 Código principal exporta module.exports = { app, romanToArabic, arabicToRoman } para permitir tests con Supertest.
@@ -183,6 +186,7 @@ Validaciones realizadas tanto en capa API (parámetros) como en funciones puras 
 
 Evitado exponer stack traces en respuestas públicas (sólo se registran en consola).
 
+---
 
 Ética profesional
 
