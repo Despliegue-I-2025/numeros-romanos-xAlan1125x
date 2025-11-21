@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Conversor Romano ↔ Arábigo</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1>Conversor <span class="accent">Romano ↔ Arábigo</span></h1>
+      <p class="subtitle">Proyecto Final — Varela Alan Christian Emmanuel</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Probar endpoints</h2>
+      <p class="muted">Haz clic para abrir cada endpoint (se abrirán en una nueva pestaña).</p>
+
+      <div class="links">
+        <a class="btn" href="/a2r?arabic=1987" target="_blank" rel="noopener">/a2r?arabic=1987 → MCMLXXXVII</a>
+        <a class="btn" href="/r2a?roman=CXXIII" target="_blank" rel="noopener">/r2a?roman=CXXIII → 123</a>
+      </div>
+
+      <h3>Pruebas de error</h3>
+      <ul>
+        <li><code>/r2a?roman=IIII</code> — numeral inválido (400)</li>
+        <li><code>/a2r?arabic=0</code> — fuera de rango (400)</li>
+      </ul>
+    </section>
+
+    <section class="card grid">
+      <div>
+        <h3>Documentación</h3>
+        <p>README técnico en la raíz del repositorio. También hay tests con <code>jest</code> y <code>supertest</code>.</p>
+        <p><strong>PDF de la unidad:</strong><br>
+        <a href="/files/Unidad-8-Armando-APIs-robustas.pdf" target="_blank">Unidad 8 – Armando APIs robustas (pdf)</a></p>
+      </div>
+
+      <div>
+        <h3>Instrucciones rápidas</h3>
+        <ol>
+          <li><code>npm install</code></li>
+          <li><code>node romano-arabigo.js</code> (pruebas locales)</li>
+          <li><code>npm test</code> (ejecutar tests)</li>
+        </ol>
+      </div>
+    </section>
+
+    <footer class="card foot">
+      <small>API serverless desplegada en Vercel — endpoints: <code>/a2r</code> y <code>/r2a</code></small>
+    </footer>
+  </main>
+</body>
+</html>
