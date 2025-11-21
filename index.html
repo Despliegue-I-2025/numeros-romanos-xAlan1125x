@@ -16,42 +16,124 @@
 
   <main class="container">
     <section class="card">
-      <h2>Probar endpoints</h2>
-      <p class="muted">Haz clic para abrir cada endpoint (se abrirán en una nueva pestaña).</p>
+      <h2>Conversor interactivo</h2>
+      <p class="muted">Escribe un número romano o arábigo y presiona convertir. Los errores vienen formateados según <code>application/problem+json</code> cuando corresponda.</p>
 
-      <div class="links">
-        <a class="btn" href="/a2r?arabic=1987" target="_blank" rel="noopener">/a2r?arabic=1987 → MCMLXXXVII</a>
-        <a class="btn" href="/r2a?roman=CXXIII" target="_blank" rel="noopener">/r2a?roman=CXXIII → 123</a>
+      <div class="form-row">
+        <div class="form-block">
+          <label for="romanInput"><strong>Romano → Arábigo</strong></label>
+          <input id="romanInput" placeholder="Ej: XXIV" />
+          <div class="actions">
+            <button id="btnR2A" class="btn">Convertir a arábigo</button>
+            <button id="btnClearR" class="btn ghost">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="form-block">
+          <label for="arabicInput"><strong>Arábigo → Romano</strong></label>
+          <input id="arabicInput" placeholder="Ej: 1987" inputmode="numeric" />
+          <div class="actions">
+            <button id="btnA2R" class="btn">Convertir a romano</button>
+            <button id="btnClearA" class="btn ghost">Limpiar</button>
+          </div>
+        </div>
       </div>
 
-      <h3>Pruebas de error</h3>
-      <ul>
-        <li><code>/r2a?roman=IIII</code> — numeral inválido (400)</li>
-        <li><code>/a2r?arabic=0</code> — fuera de rango (400)</li>
-      </ul>
+      <div id="responseArea" class="response-area" aria-live="polite"></div>
     </section>
 
-    <section class="card grid">
-      <div>
-        <h3>Documentación</h3>
-        <p>README técnico en la raíz del repositorio. También hay tests con <code>jest</code> y <code>supertest</code>.</p>
-        <p><strong>PDF de la unidad:</strong><br>
-        <a href="/files/Unidad-8-Armando-APIs-robustas.pdf" target="_blank">Unidad 8 – Armando APIs robustas (pdf)</a></p>
-      </div>
-
-      <div>
-        <h3>Instrucciones rápidas</h3>
-        <ol>
-          <li><code>npm install</code></li>
-          <li><code>node romano-arabigo.js</code> (pruebas locales)</li>
-          <li><code>npm test</code> (ejecutar tests)</li>
-        </ol>
-      </div>
+    <section class="card">
+      <h3>Historial y detalles</h3>
+      <div id="log" class="log muted">No hay acciones todavía.</div>
     </section>
 
     <footer class="card foot">
-      <small>API serverless desplegada en Vercel — endpoints: <code>/a2r</code> y <code>/r2a</code></small>
+      <div>
+        <small>API serverless desplegada en Vercel — endpoints: <code>/a2r</code> y <code>/r2a</code></small>
+      </div>
+      <div>
+        <small><a href="/mnt/data/Unidad 8 – Armando APIs robustas.docx.pdf" target="_blank" rel="noopener">Unidad 8 – Armando APIs robustas (pdf)</a></small>
+      </div>
     </footer>
   </main>
+
+<script>
+(() => {
+  const romanInput = document.getElementById('romanInput');
+  const arabicInput = document.getElementById('arabicInput');
+  const btnR2A = document.getElementById('btnR2A');
+  const btnA2R = document.getElementById('btnA2R');
+  const btnClearR = document.getElementById('btnClearR');
+  const btnClearA = document.getElementById('btnClearA');
+  const responseArea = document.getElementById('responseArea');
+  const log = document.getElementById('log');
+
+  function appendLog(entry) {
+    const time = new Date().toLocaleTimeString();
+    log.innerHTML = `<div style="margin-bottom:.6rem"><strong>[${time}]</strong> ${entry}</div>` + log.innerHTML;
+  }
+
+  function showResult(success, payload) {
+    // payload: object with either result or problem
+    responseArea.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (success) {
+      card.innerHTML = '<h4 style="color:var(--accent)">Resultado</h4><pre>' + JSON.stringify(payload, null, 2) + '</pre>';
+    } else {
+      card.innerHTML = '<h4 style="color:#ff8b8b">Error</h4><pre>' + JSON.stringify(payload, null, 2) + '</pre>';
+    }
+    responseArea.appendChild(card);
+  }
+
+  async function callApi(path) {
+    try {
+      const resp = await fetch(path, {
+        method: 'GET',
+        headers: { 'Accept': 'application/problem+json, application/json' },
+        mode: 'cors'
+      });
+      const ct = resp.headers.get('content-type') || '';
+      const body = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        // problem json preferred
+        showResult(false, body || { status: resp.status, text: resp.statusText });
+        appendLog(`REQUEST ${path} → ${resp.status} ${resp.statusText}`);
+        return { ok: false, status: resp.status, body };
+      } else {
+        showResult(true, body);
+        appendLog(`REQUEST ${path} → ${resp.status} OK`);
+        return { ok: true, status: resp.status, body };
+      }
+    } catch (err) {
+      showResult(false, { error: String(err) });
+      appendLog(`REQUEST ${path} → NETWORK ERROR`);
+      return { ok: false, body: { error: String(err) } };
+    }
+  }
+
+  btnR2A.addEventListener('click', () => {
+    const v = String(romanInput.value || '').trim();
+    if (!v) { showResult(false, { detail: 'Campo romano vacío' }); return; }
+    const path = `/r2a?roman=${encodeURIComponent(v)}`;
+    showResult(true, { info: 'Consultando...', request: path });
+    callApi(path);
+  });
+
+  btnA2R.addEventListener('click', () => {
+    const v = String(arabicInput.value || '').trim();
+    if (!v) { showResult(false, { detail: 'Campo arábigo vacío' }); return; }
+    const path = `/a2r?arabic=${encodeURIComponent(v)}`;
+    showResult(true, { info: 'Consultando...', request: path });
+    callApi(path);
+  });
+
+  btnClearR.addEventListener('click', () => { romanInput.value = ''; responseArea.innerHTML=''; });
+  btnClearA.addEventListener('click', () => { arabicInput.value = ''; responseArea.innerHTML=''; });
+
+  // quick test buttons on load (do not auto-run)
+  appendLog('Interfaz lista. Escribe y presiona convertir.');
+})();
+</script>
 </body>
 </html>
