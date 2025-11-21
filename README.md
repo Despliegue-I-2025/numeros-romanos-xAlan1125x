@@ -21,20 +21,20 @@ Cumple con las exigencias:
 ---
 
 ## Estructura del repositorio
-/ (root)
-├─ package.json
-├─ romano-arabigo.js # lógica + app express para pruebas locales (exporta app)
-├─ /api
-│ ├─ r2a.js # función serverless (roman -> arabic)
-│ └─ a2r.js # función serverless (arabic -> roman)
-├─ /errors
-│ └─ custom-errors.js # clases de error con status y code
-├─ /middlewares
-│ └─ error-handler.js # formatea errores a RFC 7807
-├─ /test
-│ ├─ romanos.test.js
-│ └─ api.test.js
-└─ README.md # (este archivo)
+/ (root) 
+├─ package.json 
+├─ romano-arabigo.js # lógica + app express para pruebas locales (exporta app) 
+├─ /api 
+│ ├─ r2a.js # función serverless (roman -> arabic) 
+│ └─ a2r.js # función serverless (arabic -> roman) 
+├─ /errors 
+│ └─ custom-errors.js # clases de error con status y code 
+├─ /middlewares 
+│ └─ error-handler.js # formatea errores a RFC 7807 
+├─ /test 
+│ ├─ romanos.test.js 
+│ └─ api.test.js 
+└─ README.md # (este archivo) 
 
 
 ---
@@ -135,7 +135,7 @@ node romano-arabigo.js
 # escucha por defecto en http://localhost:3000
 
 
- Probar endpoints:
+Probar endpoints:
 
 http://localhost:3000/r2a?roman=XXIV
 
@@ -164,7 +164,7 @@ Despliegue en Vercel
 Repositorio conectado en Vercel:
 https://vercel.com/alan-christian-emmanuel-varelas-projects/numeros-romanos-x-alan1125x 
 
-
+---
 
 Comprobar endpoints desplegados:
 
@@ -174,7 +174,7 @@ https://numeros-romanos-x-alan1125x.vercel.app/api/a2r?arabic=1987
 
 ---
  
-Notas técnicas / decisiones
+Notas técnicas / decisiones 
 
 Código principal exporta module.exports = { app, romanToArabic, arabicToRoman } para permitir tests con Supertest.
 
